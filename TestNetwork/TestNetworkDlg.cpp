@@ -61,6 +61,7 @@ void CTestNetworkDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT_IP, m_edIP);
 	DDX_Control(pDX, IDC_EDIT_PORT, m_edPort);
+	DDX_Control(pDX, IDC_LIST_LOG, m_lstLog);
 }
 
 BEGIN_MESSAGE_MAP(CTestNetworkDlg, CDialogEx)
@@ -68,6 +69,7 @@ BEGIN_MESSAGE_MAP(CTestNetworkDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_CONNECT, &CTestNetworkDlg::OnBnClickedButtonConnect)
+	ON_MESSAGE(UM_NETWORK_EVENT, &CTestNetworkDlg::OnNetworkEvent)
 END_MESSAGE_MAP()
 
 
@@ -164,12 +166,63 @@ void CTestNetworkDlg::OnBnClickedButtonConnect()
 	CString sValue; m_edPort.GetWindowText(sValue);
 	int iPort = _ttoi(sValue);
 	m_edIP.GetWindowText(sValue);
-	m_client.SetIPPort(sValue, iPort);
-	m_client.StartClient();
+
+	if (!m_client.GetConnect())
+	{
+		m_client.SetIPPort(sValue, iPort);
+		if (m_client.StartClient())
+		{
+			GetDlgItem(IDC_BUTTON_CONNECT)->SetWindowText(_T("Disconnect"));
+		}
+	}
+	else
+	{
+		m_client.StopClient();
+		GetDlgItem(IDC_BUTTON_CONNECT)->SetWindowText(_T("Connect"));
+	}
 }
 
 void CTestNetworkDlg::Init()
 {
 	m_edIP.SetWindowText(_T("127.0.0.1"));
 	m_edPort.SetWindowText(_T("12345"));
+	m_client.SetOwner(this);
+}
+
+void CTestNetworkDlg::AddLog(CString sLog)
+{
+	m_lstLog.InsertString(0, sLog);
+}
+
+LRESULT CTestNetworkDlg::OnNetworkEvent(WPARAM wParam, LPARAM lParam)
+{
+	NETWORK_EVENT eEvent = (NETWORK_EVENT)wParam;
+	PACKET* pPacket = (PACKET*)lParam;
+	CString sValue;
+
+	switch (eEvent)
+	{
+	case neConnect:
+	{
+		sValue.Format(_T("접속 성공"));
+		AddLog(sValue);
+	}break;
+	case neDisconnect:
+	{
+		sValue.Format(_T("연결 끊김"));
+		AddLog(sValue);
+	}break;
+	case neRecv:
+	{
+		if (pPacket)
+		{
+			sValue.Format(_T("수신: %s"), pPacket->pszData);
+			AddLog(sValue);
+		}
+	}break;
+	}
+	
+
+	if (pPacket) delete pPacket;
+	return S_OK;
 }

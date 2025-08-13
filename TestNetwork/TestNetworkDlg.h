@@ -37,6 +37,8 @@ public:
 
 private:
 	void Init();
+	void AddLog(CString sLog);
+	afx_msg LRESULT OnNetworkEvent(WPARAM wParam, LPARAM lParam);
 
 	//Ctrl
 	CEdit m_edIP;
@@ -44,4 +46,6 @@ private:
 
 	//Network
 	Client m_client;
+public:
+	CListBox m_lstLog;
 };

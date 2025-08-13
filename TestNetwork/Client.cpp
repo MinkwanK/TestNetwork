@@ -61,7 +61,21 @@ bool Client::StartClient()
 
     std::thread ConnectThread(&Client::ConnectThread, this);
     ConnectThread.detach();
+    SetConnect(true);
     return TRUE;
+}
+
+void Client::StopClient()
+{
+    m_bStop = true;
+    if (m_sock)
+    {
+        closesocket(m_sock);
+        m_sock = -1;
+    }
+
+    PostMessage(m_pOwner->GetSafeHwnd(), UM_NETWORK_EVENT, (WPARAM)neDisconnect, (LPARAM)nullptr);
+    SetConnect(false);
 }
 
 bool Client::ConnectThread(Client* pClient)
@@ -101,6 +115,11 @@ bool Client::ConnectProc()
         {
             sValue.Format(_T("[클라이언트] 성공: %d 접속\n"), m_sock);
             OutputDebugString(sValue);
+
+            if (m_pOwner && m_pOwner->GetSafeHwnd())
+            {
+                PostMessage(m_pOwner->GetSafeHwnd(), UM_NETWORK_EVENT, (WPARAM)neConnect, (LPARAM)nullptr);
+            }
             break;
         }
         else 
@@ -283,13 +302,12 @@ void Client::RecvProc(SOCKET sock)
             }
         }
     }
-    SetEvent(m_hRecvThread);
 }
 
 int Client::Read(SOCKET sock)
 {
     CString sValue;
-    char buf[MAX_BUF];
+    char buf[MAX_BUF] = {};
     int iRecv = recv(sock, buf, MAX_BUF, 0);
 
     if (iRecv > 0)
@@ -306,16 +324,25 @@ int Client::Read(SOCKET sock)
         return false;
     }
 
-    PACKET packet = {};
-
     if (iRecv > 0)
     {
-        packet.pszData = buf;
-        packet.uiSize = iRecv;
+        PACKET* pPacket = new PACKET;
+        pPacket->pszData = buf;
+        pPacket->uiSize = iRecv;
 
         CString sRead(buf);
         sRead.AppendFormat(_T("\t수신 \n"));
         OutputDebugString(sRead);
+
+        if (m_pOwner && m_pOwner->GetSafeHwnd())
+        {
+            PostMessage(m_pOwner->GetSafeHwnd(), UM_NETWORK_EVENT, (WPARAM)neRecv, (LPARAM)pPacket);
+        }
+        else
+        {
+            if (pPacket) delete pPacket;
+        }
+         
     }
 
     OutputDebugString(sValue);

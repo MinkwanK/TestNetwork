@@ -1,6 +1,7 @@
 #pragma once
 #include <atomic>
 
+#define UM_NETWORK_EVENT	(WM_USER + 1000)
 /*
  
 WSANOTINITIALISED (10093)	WSAStartup() 호출 안 됨
@@ -11,6 +12,13 @@ WSAEINTR (10004)			차단 호출이 취소됨
 WSAENOTSOCK (10038)			SOCKET 핸들이 아님
 
  */
+typedef enum NETWORK_EVENT
+{
+	neConnect,
+	neDisconnect,
+	neRecv,
+	neSend,
+};
 
 typedef struct PACKET
 {
@@ -32,6 +40,8 @@ public:
 	void SetIPPort(const CString& sIP, const UINT uiPort) { m_sIP = sIP; m_uiPort = uiPort; }
 	int GetSocket() const { return m_sock; }
 	void Close();
+	void SetOwner(CWnd* pOwner) { m_pOwner = pOwner; }
+	CWnd* GetOwner() const { return m_pOwner; }
 
 protected:
 	bool InitWinSocket();
@@ -46,8 +56,6 @@ protected:
 protected:
 	//Resource
 	CWnd* m_pOwner = nullptr;
-	void SetOwner(CWnd* pOwner) { m_pOwner = pOwner; }
-	CWnd* GetOwner() const { return m_pOwner; }
 
 	//Network Resource
 	SOCKET m_sock;
