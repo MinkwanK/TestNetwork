@@ -62,6 +62,7 @@ void CTestNetworkDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_IP, m_edIP);
 	DDX_Control(pDX, IDC_EDIT_PORT, m_edPort);
 	DDX_Control(pDX, IDC_LIST_LOG, m_lstLog);
+	DDX_Control(pDX, IDC_EDIT_MESSAGE, m_edMessage);
 }
 
 BEGIN_MESSAGE_MAP(CTestNetworkDlg, CDialogEx)
@@ -70,6 +71,7 @@ BEGIN_MESSAGE_MAP(CTestNetworkDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_CONNECT, &CTestNetworkDlg::OnBnClickedButtonConnect)
 	ON_MESSAGE(UM_NETWORK_EVENT, &CTestNetworkDlg::OnNetworkEvent)
+	ON_BN_CLICKED(IDC_BUTTON_SEND, &CTestNetworkDlg::OnBnClickedButtonSend)
 END_MESSAGE_MAP()
 
 
@@ -187,6 +189,7 @@ void CTestNetworkDlg::Init()
 	m_edIP.SetWindowText(_T("127.0.0.1"));
 	m_edPort.SetWindowText(_T("12345"));
 	m_client.SetOwner(this);
+	this->SetWindowText(_T("테스트네트워크"));
 }
 
 void CTestNetworkDlg::AddLog(CString sLog)
@@ -216,13 +219,43 @@ LRESULT CTestNetworkDlg::OnNetworkEvent(WPARAM wParam, LPARAM lParam)
 	{
 		if (pPacket)
 		{
-			sValue.Format(_T("수신: %s"), pPacket->pszData);
+			SYSTEMTIME stNow; GetLocalTime(&stNow);
+			sValue.Format(_T("[%04d.%02d.%02d : %02d.%02d.%02d] 수신: %s"), stNow.wYear,stNow.wMonth,stNow.wDay,stNow.wHour,stNow.wMinute,
+				stNow.wSecond,pPacket->pszData);
+			AddLog(sValue);
+		}
+	}break;
+	case neSend:
+	{
+		if (pPacket)
+		{
+			SYSTEMTIME stNow; GetLocalTime(&stNow);
+			sValue.Format(_T("[%04d.%02d.%02d : %02d.%02d.%02d] 송신: %s"), stNow.wYear, stNow.wMonth, stNow.wDay, stNow.wHour, stNow.wMinute,
+				stNow.wSecond, pPacket->pszData);
 			AddLog(sValue);
 		}
 	}break;
 	}
 	
 
-	if (pPacket) delete pPacket;
+	if (pPacket)
+	{
+		delete[] pPacket->pszData;
+		delete pPacket;
+	}
 	return S_OK;
+}
+
+
+void CTestNetworkDlg::OnBnClickedButtonSend()
+{
+	CString sMessage;
+	m_edMessage.GetWindowText(sMessage);
+
+	PACKET packet;
+	packet.sock = m_client.GetSocket();
+	packet.pszData = new char[sMessage.GetLength()];
+	packet.uiSize = sMessage.GetLength();
+
+	m_client.AddSendPacket(packet);
 }

@@ -48,4 +48,6 @@ private:
 	Client m_client;
 public:
 	CListBox m_lstLog;
+	afx_msg void OnBnClickedButtonSend();
+	CEdit m_edMessage;
 };

@@ -42,6 +42,7 @@ public:
 	void Close();
 	void SetOwner(CWnd* pOwner) { m_pOwner = pOwner; }
 	CWnd* GetOwner() const { return m_pOwner; }
+	void AddSendPacket(PACKET packet) { m_aSend.Add(packet); }
 
 protected:
 	bool InitWinSocket();
@@ -52,6 +53,8 @@ protected:
 	virtual void RecvProc(SOCKET sock) = NULL;
 	virtual int Send() = NULL;
 	virtual int Read(SOCKET sock) = NULL;
+	void SetRunning(bool bRun) { m_bRunning = bRun; }
+	bool GetRunning() { return m_bRunning; }
 
 protected:
 	//Resource
@@ -61,6 +64,8 @@ protected:
 	SOCKET m_sock;
 	CString m_sIP;
 	UINT m_uiPort = -1;
+	CArray<PACKET> m_aSend;
+	bool m_bRunning = false;
 
 	//Thread
 	HANDLE m_hRecvThread = nullptr;

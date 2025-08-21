@@ -16,6 +16,9 @@
     <Filter Include="Network">
       <UniqueIdentifier>{fe0ed54c-9841-4eda-a912-d4e8d01b1509}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Util">
+      <UniqueIdentifier>{483d11d7-a46a-400d-aec0-07adc53cbf44}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TestNetwork.h">
@@ -36,11 +39,14 @@
     <ClInclude Include="pch.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\Desktop\Projects\TestNetwork\TestNetwork\Client.h">
+    <ClInclude Include="Client.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\Desktop\Projects\TestNetwork\TestNetwork\TCPSocket.h">
+    <ClInclude Include="TCPSocket.h">
       <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="ComonDefine.h">
+      <Filter>Util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -53,11 +59,14 @@
     <ClCompile Include="pch.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Desktop\Projects\TestNetwork\TestNetwork\Client.cpp">
+    <ClCompile Include="Client.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Desktop\Projects\TestNetwork\TestNetwork\TCPSocket.cpp">
+    <ClCompile Include="TCPSocket.cpp">
       <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="ComonDefine.cpp">
+      <Filter>Util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

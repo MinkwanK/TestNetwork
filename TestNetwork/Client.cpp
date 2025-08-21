@@ -54,6 +54,7 @@ bool Client::MakeNonBlockingSocket()
 
 bool Client::StartClient()
 {
+    m_bStop = false;
     if (!MakeNonBlockingSocket())
     {
         OutputDebugString(_T("StartClient Failed\n"));
@@ -61,7 +62,7 @@ bool Client::StartClient()
 
     std::thread ConnectThread(&Client::ConnectThread, this);
     ConnectThread.detach();
-    SetConnect(true);
+    SetRunning(true);
     return TRUE;
 }
 
@@ -76,6 +77,7 @@ void Client::StopClient()
 
     PostMessage(m_pOwner->GetSafeHwnd(), UM_NETWORK_EVENT, (WPARAM)neDisconnect, (LPARAM)nullptr);
     SetConnect(false);
+    SetRunning(false);
 }
 
 bool Client::ConnectThread(Client* pClient)
@@ -120,6 +122,7 @@ bool Client::ConnectProc()
             {
                 PostMessage(m_pOwner->GetSafeHwnd(), UM_NETWORK_EVENT, (WPARAM)neConnect, (LPARAM)nullptr);
             }
+            SetConnect(true);
             break;
         }
         else 
@@ -217,34 +220,60 @@ void Client::SendProc(SOCKET sock)
 
 int Client::Send()
 {
-    //EnterCriticalSection(&m_cs);
-    //CString sValue;
-    //const int iSendCount = m_aSend.GetCount();
-    //int iSend = -1;
-    //if (iSendCount > 0)
-    //{
-    //    PACKET packet = m_aSend.GetAt(0);
-    //    SOCKET targetSock = packet.sock;  // 패킷 내에 있는 정확한 소켓 사용
+    EnterCriticalSection(&m_cs);
+    CString sValue;
+    const int iSendCount = m_aSend.GetCount();
+    int iSend = -1;
+    if (iSendCount > 0)
+    {
+        PACKET packet = m_aSend.GetAt(0);
+        SOCKET targetSock = packet.sock;  // 패킷 내에 있는 정확한 소켓 사용
 
-    //    if (targetSock != INVALID_SOCKET)
-    //    {
-    //        iSend = send(targetSock, packet.pszData, packet.uiSize, 0);
-    //        if (iSend > 0)
-    //             sValue.Format(_T("[Client][SEND] %d 소켓 %d 바이트\n"), targetSock, iSend);
-    //        else if (iSend == 0)
-    //            sValue.Format(_T("[Client][SEND] %d 소켓 정상 종료 (상대방이 연결 끊음)\n"), targetSock);
-    //        else
-    //        {
-    //            sValue.Format(_T("[Client][SEND] %d 소켓 실패코드 %d\n"), targetSock, WSAGetLastError());
-    //            return false;
-    //        }
-    //        
-    //        //UseCallback(NETWORK_EVENT::SEND, packet, targetSock, sValue);
-    //    }
-    //}
-    //LeaveCriticalSection(&m_cs);
-    //return iSend;
-    return 0;
+        if (targetSock != INVALID_SOCKET)
+        {
+            iSend = send(targetSock, packet.pszData, packet.uiSize, 0);
+            if (iSend > 0)
+            {
+                sValue.Format(_T("[Client][SEND] %d 소켓 %d 바이트\n"), targetSock, iSend);
+
+                PACKET* pPostMessagePacket = new PACKET;
+                pPostMessagePacket->pszData = packet.pszData;
+                pPostMessagePacket->uiSize = iSend;
+
+                CString sSend(packet.pszData);
+                sSend.AppendFormat(_T("\t송신 \n"));
+                OutputDebugString(sSend);
+
+                if (m_pOwner && m_pOwner->GetSafeHwnd())
+                {
+                    PostMessage(m_pOwner->GetSafeHwnd(), UM_NETWORK_EVENT, (WPARAM)neSend, (LPARAM)pPostMessagePacket);
+                }
+                else
+                {
+                    if (pPostMessagePacket)
+                    {
+                        if(pPostMessagePacket->pszData) delete[] pPostMessagePacket->pszData;
+                        delete pPostMessagePacket;
+                    }
+                }
+            }
+            else if (iSend == 0)
+            {
+                sValue.Format(_T("[Client][SEND] %d 소켓 정상 종료 (상대방이 연결 끊음)\n"), targetSock);
+                delete[] packet.pszData;
+            }
+            else
+            {
+                sValue.Format(_T("[Client][SEND] %d 소켓 실패코드 %d\n"), targetSock, WSAGetLastError());
+                delete[] packet.pszData;
+                return false;
+            }
+        }
+        m_aSend.RemoveAt(0);
+    }
+    OutputDebugString(sValue);
+    LeaveCriticalSection(&m_cs);
+    return iSend;
 }
 
 void Client::RecvThread(Client* pClient, SOCKET sock)
@@ -307,8 +336,8 @@ void Client::RecvProc(SOCKET sock)
 int Client::Read(SOCKET sock)
 {
     CString sValue;
-    char buf[MAX_BUF] = {};
-    int iRecv = recv(sock, buf, MAX_BUF, 0);
+    char* pBuf = new char[MAX_BUF];
+    int iRecv = recv(sock, pBuf, MAX_BUF, 0);
 
     if (iRecv > 0)
     {
@@ -327,10 +356,10 @@ int Client::Read(SOCKET sock)
     if (iRecv > 0)
     {
         PACKET* pPacket = new PACKET;
-        pPacket->pszData = buf;
+        pPacket->pszData = pBuf;
         pPacket->uiSize = iRecv;
 
-        CString sRead(buf);
+        CString sRead(pBuf);
         sRead.AppendFormat(_T("\t수신 \n"));
         OutputDebugString(sRead);
 
@@ -340,11 +369,13 @@ int Client::Read(SOCKET sock)
         }
         else
         {
-            if (pPacket) delete pPacket;
+            if (pPacket)
+            {
+                if (pPacket->pszData) delete[] pPacket->pszData;
+                delete pPacket;
+            }
         }
-         
     }
-
     OutputDebugString(sValue);
     return iRecv;
 }

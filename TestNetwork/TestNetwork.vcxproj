@@ -183,24 +183,26 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\Desktop\Projects\TestNetwork\TestNetwork\Client.h" />
-    <ClInclude Include="..\..\..\..\Desktop\Projects\TestNetwork\TestNetwork\TCPSocket.h" />
+    <ClInclude Include="Client.h" />
+    <ClInclude Include="ComonDefine.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="TCPSocket.h" />
     <ClInclude Include="TestNetwork.h" />
     <ClInclude Include="TestNetworkDlg.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\Desktop\Projects\TestNetwork\TestNetwork\Client.cpp" />
-    <ClCompile Include="..\..\..\..\Desktop\Projects\TestNetwork\TestNetwork\TCPSocket.cpp" />
+    <ClCompile Include="Client.cpp" />
+    <ClCompile Include="ComonDefine.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="TCPSocket.cpp" />
     <ClCompile Include="TestNetwork.cpp" />
     <ClCompile Include="TestNetworkDlg.cpp" />
   </ItemGroup>
